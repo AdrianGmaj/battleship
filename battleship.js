@@ -1,38 +1,122 @@
-var randomLoc = Math.floor(Math.random() * 5);
-var location1 = randomLoc;
-var location2 = randomLoc + 1;
-var location3 = randomLoc + 2;
-
-var guess;
-var hits = 0;
-var guesses = 0;
-var isSunk = false;
-
-while (isSunk == false) {
-    guess = prompt("Gotów, cel, pal! (podaj liczbę od zera do 6):");
-    if (guess < 0 || guess > 6) {
-        alert("proszę podać poprawny numer komórki")
+var view = {
+    displayMessage: function (msg) {
+        var messageAre = document.getElementById("messageArea");
+        messageAre.innerHTML = msg;
+    },
+    displayHit: function (location) {
+        var cell = document.getElementById(location);
+        cell.setAttribute("class", "hit")
+    },
+    displayMiss: function (location) {
+        var cell = document.getElementById(location)
+        cell.setAttribute("class", "miss");
     }
-    else {
-        guesses = guesses + 1;
-        if (guess == location1 || guess == location2 || guess == location3) {
-            hits = hits + 1;
-            alert("trafiony!")
+}
 
+var model = {
+    boardSize: 7,
+    numbShips: 3,
+    shipLenght: 3,
+    shipSunk: 0,
 
-            if (hits == 3) {
-                isSunk = true;
+    ships: [
+        { locations: ["06", "16", "26"], hits: ["", "", ""] },
+        { locations: ["24", "34", "44"], hits: ["", "", ""] },
+        { locations: ["10", "11", "12"], hits: ["", "", ""] }
+    ],
 
-                alert("zatopiłeś okręt!");
+    fire: function (guess) {
+        for (var i = 0; i < this.numbShips; i++) {
+            var ship = this.ships[i];
+            var locations = ship.locations;
+            var index = locations.indexOf(guess)
+            if (index >= 0) {
+                ship.hits[index] = "hit";
+                view.displayHit(guess);
+                view.displayMessage("TRAFIONY!!")
+                if (this.isSunk(ship)) {
+                    view.displayMessage("Zatopiłeś okręt!")
+                    this.shipSunk++;
+                }
+                return true;
             }
         }
-        else {
-            alert("pudło")
+        view.displayMiss(guess);
+        view.displayMessage("Spudłowałeś.");
+        return false;
+    },
+    isSunk: function (ship) {
+        for (var i = 0; i < this.shipLenght; i++) {
+            if (ship.hits[i] !== "hit") {
+                return false;
+            }
+
+
         }
+        return true;
     }
 
 }
-var stats = "potrzebowałeś " + guesses + " prób by zatopić okręt czyli twoja efektywnośc wynosi :" + (3 / guesses) + ".";
-alert(stats);
+var controller = {
+    guesses: 0,
+
+    processGuess: function (guess) {
+        var location = parseGuess(guess);
+        if (location) {
+            this.guesses++;
+            var hit = model.fire(location);
+            if (hit && model.shipSunk === model.numbShips) {
+                view.displayMessage("Zatopiłeś wszystkie moje okręty, w " + this.guesses + "próbach");
+            }
+        }
+    }
+}
+/**
+ * 
+ * @param {string} guess 
+ * @returns 
+ */
+function parseGuess(guess) {
+    var alphabet = ['A', 'B', 'C', 'D', 'E', 'F']
+    if (guess === null || guess.length !== 2) {
+        alert("Proszę wpisać literę i cyfrę!!")
+    }
+    else {
+        var firstChar = guess.charAt(0);
+        var row = alphabet.indexOf(firstChar);
+        var column = guess.charAt(1);
+
+        if (isNaN(row) || isNaN(column)) {
+            alert("To nie są prawidłowe współrzędne!");
+        } else if (row < 0 || row >= model.boardSize) {
+            alert("Ups, pole poza planszą!");
+        } else {
+            return row + column;
+        }
+    }
+    return null;
+
+}
+function handleFireButton() {
+    var guessInput = document.getElementById("guessInput");
+    var guess = guessInput.value;
+
+    controller.processGuess(guess);
+
+    guessInput.value = "";
+}
+function init() {
+    var fireButton = document.getElementById("fireButton");
+    fireButton.onclick = handleFireButton;
+
+}
+
+init();
 
 
+
+
+
+
+
+view.displayMessage("halo czy to działa?");
